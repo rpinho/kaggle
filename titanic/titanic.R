@@ -1,0 +1,40 @@
+setwd("/Users/ricardo/coursera//datasci_course_materials/kaggle//titanic")
+#train = read.csv("new_train.csv")
+mydata = read.csv("featurized.csv")
+dim(mydata)
+#attach(mydata)
+fit = glm(Survived~Pclass+Sex+Age+SibSp+Parch+Fare+Embarked, family=binomial(), data=mydata)
+summary(fit)
+fit = glm(Survived~Pclass+Sex+Pclass*Sex+Age+Age**2+SibSp+Parch+Fare+Embarked+Title, family=binomial(), data=mydata)
+summary(fit)
+fit = glm(Survived~Cabin, family=binomial(), data=mydata)
+summary(fit)
+fit = glm(Sex~Title, family=binomial(), data=mydata)
+summary(fit)
+fit = lm(Age~Pclass+Sex+SibSp+Parch+Fare+Embarked, data=mydata)
+summary(fit)
+fit = lm(Age~Cabin, data=mydata)
+summary(fit)
+fit = lm(Age~Pclass+Sex+SibSp+Cabin, data=mydata)
+summary(fit)
+
+#install.packages("DAAG")
+library(DAAG)
+# not NaN
+i = complete.cases(mydata[ , c('Age', 'Embarked', 'Fare')])
+cv.lm(df=mydata[i,], fit, m=10)
+f = Age~Pclass+Sex+Pclass*Sex+SibSp+Parch+Fare+Embarked+Cabin+Title
+val.dag = CVlm(df=mydata[i,], m=10, form.lm=formula(f))
+
+#install.packages("Design")
+#install.packages("bootstrap")
+library(bootstrap)
+theta.fit <- function(x,y){lsfit(x,y)}
+theta.predict <- function(fit,x){cbind(1,x)%*%fit$coef}
+X <- as.matrix(mydata[i,c("Pclass","Sex","SibSp","Parch","Fare","Embarked","Cabin","Title")])
+y <- as.matrix(mydata[i,c("Age")])
+results <- crossval(X,y,theta.fit,theta.predict,ngroup=10)
+
+library("boot")
+model.2 <- glm(f, gaussian, mydata)
+val.10.fold <- cv.glm(data=mydata, glmfit=model.2, K=10)
